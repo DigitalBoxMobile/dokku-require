@@ -5,18 +5,21 @@ DOKKU_REQUIRE_PREFIX="${DOKKU_REQUIRE_PREFIX:-dokku}"
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 source "$PLUGIN_AVAILABLE_PATH/require/functions"
 
+require_load_env() {
+  # Load global and app-specific env vars into the current shell
+  local APP="$1"
+  eval "$(dokku config:export --format exports --global || true)"
+  if [[ -n "$APP" ]]; then
+    eval "$(dokku config:export --format exports "$APP" || true)"
+  fi
+}
+
 
 require_pre_receive_app() {
   declare desc="reads app.json and builds plugins"
   local APP="$1" IMAGE_SOURCE_TYPE="$2" TMP_WORK_DIR="$3" REV="$4"
   local APP_JSON_FILE="$TMP_WORK_DIR/${DOKKU_REQUIRE_FILENAME-app.json}"
   local TOTAL PLUGIN
-
-  # export global and app config
-  eval "$(dokku config:export --format exports --global || true)"
-  if [[ -n "$APP" ]]; then
-    eval "$(dokku config:export --format exports "$APP" || true)"
-  fi
 
   if [[ ! -f "$APP_JSON_FILE" ]]; then
     return

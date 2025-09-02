@@ -3,6 +3,15 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 DOKKU_REQUIRE_PREFIX="${DOKKU_REQUIRE_PREFIX:-dokku}"
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 
+require_load_env() {
+  # Load global and app-specific env vars into the current shell
+  local APP="$1"
+  eval "$(dokku config --global --export 2>/dev/null || true)"
+  if [[ -n "$APP" ]]; then
+    eval "$(dokku config "$APP" --export 2>/dev/null || true)"
+  fi
+}
+
 require_get_python_executable() {
   declare -a executables=("python3" "python2" "python")
   local executable
@@ -98,6 +107,9 @@ require_add_volumes() {
       HOSTPATH=$(require_get_app_plugins "[\"$DOKKU_REQUIRE_PREFIX\"][\"volumes\"][${COUNT}][\"host\"]" < "$APP_JSON_FILE" 2>&1)
       APPPATH=$(require_get_app_plugins "[\"$DOKKU_REQUIRE_PREFIX\"][\"volumes\"][${COUNT}][\"app\"]" < "$APP_JSON_FILE" 2>&1)
 
+      # Ensure dokku global/app env vars are available for substitution
+      require_load_env "$APP"
+
       # "phases" key is optional
       set +eo pipefail
       PHASES=$(require_get_app_plugins "[\"$DOKKU_REQUIRE_PREFIX\"][\"volumes\"][${COUNT}][\"phases\"]" < "$APP_JSON_FILE" 2>&1)
@@ -110,9 +122,19 @@ require_add_volumes() {
         break
       fi
 
-      # swap $APP for app name in commands
+      # swap $APP for app name in commands and expand other environment variables
       HOSTPATH="${HOSTPATH//\$APP/$APP}"
       APPPATH="${APPPATH//\$APP/$APP}"
+
+      if command -v envsubst >/dev/null 2>&1; then
+        HOSTPATH="$(printf '%s' "$HOSTPATH" | envsubst)"
+        APPPATH="$(printf '%s' "$APPPATH" | envsubst)"
+      else
+        # Fallback if envsubst is unavailable
+        HOSTPATH="$(eval "echo \"$HOSTPATH\"")"
+        APPPATH="$(eval "echo \"$APPPATH\"")"
+      fi
+
       mkdir -p "$HOSTPATH"
       dokku docker-options:add "$APP" "$PHASES" -v "$HOSTPATH:$APPPATH"
       let COUNT=COUNT+1
