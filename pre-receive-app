@@ -13,9 +13,9 @@ require_pre_receive_app() {
   local TOTAL PLUGIN
 
   # export global and app config
-  eval "$(dokku config --global --export || true)"
+  eval "$(dokku config:export --format exports --global || true)"
   if [[ -n "$APP" ]]; then
-    eval "$(dokku config "$APP" --export || true)"
+    eval "$(dokku config:export --format exports "$APP" || true)"
   fi
 
   if [[ ! -f "$APP_JSON_FILE" ]]; then
