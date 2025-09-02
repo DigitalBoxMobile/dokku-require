@@ -11,7 +11,7 @@ required by your app.
 
 ```
 # on 0.4.x
-dokku plugin:install https://github.com/crisward/dokku-require.git require
+dokku plugin:install https://github.com/DigitalBoxMobile/dokku-require require
 ```
 
 ## Usage

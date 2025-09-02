@@ -16,7 +16,7 @@ help_content
     if [[ $1 = "require:help" ]] ; then
       echo -e 'Usage: add an app.json file to your repo before pushing'
       echo ''
-      echo 'For more help see https://github.com/crisward/dokku-require'
+      echo 'For more help see https://github.com/DigitalBoxMobile/dokku-require'
       echo ''
       echo 'dokku require:mode'
       echo ''
