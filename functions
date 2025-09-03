@@ -53,17 +53,34 @@ require_get_json_len(){
 
 }
 
+# Changes app name to service name with underscores
+_service_name_from_app() {
+  local app="$1"
+  printf '%s' "$(echo "$app" | sed -E 's/[^a-zA-Z0-9]+/_/g')"
+}
+
 require_install_link() {
   declare desc="installs and links plugin passed in"
   declare APP="$1" PLUGIN="$2"
+
+  require_load_env "$APP"
+
+  local SERVICE
+  # configured by DOKKU_REQUIRE_LINK_SERVICE_UNDERSCORED
+  if [[ "${DOKKU_REQUIRE_LINK_SERVICE_UNDERSCORED:-0}" == "1" ]]; then
+    SERVICE="$(_service_name_from_app "$APP")"
+  else
+    SERVICE="$APP"
+  fi
+
   if [[ -d "$PLUGIN_AVAILABLE_PATH/$PLUGIN/" ]]; then
-    if ! dokku "$PLUGIN:exists" "$APP" > /dev/null 2>&1; then
-      dokku_log_info1 "Setting up $PLUGIN"
-      dokku "$PLUGIN:create" "$APP"
+    if ! dokku "$PLUGIN:exists" "$SERVICE" > /dev/null 2>&1; then
+      dokku_log_info1 "Setting up $PLUGIN (service: $SERVICE)"
+      dokku "$PLUGIN:create" "$SERVICE"
     fi
-    
-    if ! dokku "$PLUGIN:linked" "$APP" "$APP" > /dev/null 2>&1; then
-      DOKKU_CONFIG_RESTART=false dokku "$PLUGIN:link" "$APP" "$APP"
+
+    if ! dokku "$PLUGIN:linked" "$APP" "$SERVICE" > /dev/null 2>&1; then
+      DOKKU_CONFIG_RESTART=false dokku "$PLUGIN:link" "$SERVICE" "$APP"
     fi
   else
     dokku_log_info1 "$PLUGIN plugin is not available on your system - attempting to contine without $PLUGIN"

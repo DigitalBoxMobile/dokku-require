@@ -19,6 +19,9 @@ require_pre_receive_app() {
   declare desc="reads app.json and builds plugins"
   local APP="$1" IMAGE_SOURCE_TYPE="$2" TMP_WORK_DIR="$3" REV="$4"
   local APP_JSON_FILE="$TMP_WORK_DIR/${DOKKU_REQUIRE_FILENAME-app.json}"
+
+  require_load_env "$APP"
+
   local TOTAL PLUGIN
 
   if [[ ! -f "$APP_JSON_FILE" ]]; then

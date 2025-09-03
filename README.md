@@ -14,6 +14,12 @@ required by your app.
 dokku plugin:install https://github.com/DigitalBoxMobile/dokku-require require
 ```
 
+## Update
+
+```
+sudo dokku plugin:update require
+```
+
 ## Usage
 
 In the root of your app, you need to add an app.json file [as specificed in this heroku spec](https://devcenter.heroku.com/articles/app-json-schema#schema-reference)
@@ -69,9 +75,31 @@ array will be run in sequence.
       {
         "name":"mariadb",
         "commands":["mariadb:create mydb","mariadb:link mydb $APP"]
+      },
+      {
+        "name":"rabbitmq",
+        "commands":["rabbitmq:link message_queue_service $APP"]
       }
     ]
   }
+```
+
+By default, the service name matches the app name ($APP). To replace dashes with underscores in service names, set the environment variable DOKKU_REQUIRE_LINK_SERVICE_UNDERSCORED=1.
+
+
+```json
+  # app.json
+
+  "dokku":{"plugins":["postgres"]}
+```
+
+```bash
+APP=my-app-test
+dokku config:set $APP DOKKU_REQUIRE_LINK_SERVICE_UNDERSCORED=1
+dokku ps:rebuild
+
+# Service name will be: my_app_test
+# Default (without variable): my-app-test
 ```
 
 ## Volumes
